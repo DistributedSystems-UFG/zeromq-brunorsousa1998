@@ -1,2 +1,3 @@
-PUB_HOST = 'localhost'
+PUB_HOST = '127.0.0.1'
 PUB_PORT = 12345
+DEFAULT_TOPIC = 'TIME'

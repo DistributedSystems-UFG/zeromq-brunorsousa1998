@@ -1,17 +1,27 @@
-import zmq, time, pickle, sys
+import pickle
+import sys
+
+import zmq
+
 from environments import *
 
 context = zmq.Context()
-me = str(sys.argv[1]) if len(sys.argv) > 1 else "0"
-r = context.socket(zmq.PULL)
-p1 = f"tcp://{PRODUCER_HOST}:{PRODUCER_PORT}"
-p2 = f"tcp://{PRODUCER_HOST}:{CONSUMER_PORT}"
-r.connect(p1)
-r.connect(p2)
+worker_host = sys.argv[1] if len(sys.argv) > 1 else WORKER_HOST
+worker_port = sys.argv[2] if len(sys.argv) > 2 else WORKER_PORT
 
-print(f"{me} started")
+receiver = context.socket(zmq.PULL)
+receiver.connect(f"tcp://{worker_host}:{worker_port}")
+
+print(f"Consumer connected to tcp://{worker_host}:{worker_port}")
 
 while True:
-    work = pickle.loads(r.recv())
-    print(f"{me} received {work}")
-    time.sleep(work[1]*0.01 if isinstance(work, tuple) else work * 0.01)
+    message = pickle.loads(receiver.recv())
+
+    if message.get("type") == "STOP":
+        print("Consumer stopped")
+        break
+
+    print(
+        f"Task {message['id']} processed by {message['worker']}: "
+        f"{message['operation']}({message['value']}) = {message['result']}"
+    )
